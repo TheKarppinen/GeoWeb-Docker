@@ -1,4 +1,8 @@
-FROM centos:7
+FROM centos/devtoolset-7-toolchain-centos7:7
+USER root
+
+# Developer and root used above to avoid compiler version error
+#FROM centos:7
 
 RUN yum update -y && yum install -y \
     epel-release
@@ -38,18 +42,22 @@ RUN chown postgres: /postgresql/
 RUN chown postgres: /var/log/postgresql.log
 RUN runuser -l postgres -c "initdb -D /postgresql"
 
-# Install adaguc-services
-WORKDIR /adaguc
-ADD  https://github.com/KNMI/adaguc-services/archive/master.tar.gz  /adaguc/adaguc-services.tar.gz
-RUN tar xvf adaguc-services.tar.gz
-WORKDIR /adaguc/adaguc-services-master
-RUN mvn package
-RUN cp ./target/adaguc-services-*.war /usr/share/tomcat/webapps/adaguc-services.war
+# SKIPPING adaguc-services because it will be handled separately via adaguc-server Dockerfile.
+# SEE: https://github.com/KNMI/adaguc-server/blob/master/Dockerfile#L81
+# == SKIP ==
+## Install adaguc-services
+#WORKDIR /adaguc
+#ADD  https://github.com/TheKarppinen/adaguc-services/archive/master.tar.gz  /adaguc/adaguc-services.tar.gz
+#RUN tar xvf adaguc-services.tar.gz
+#WORKDIR /adaguc/adaguc-services-master
+#RUN mvn package
+#RUN cp ./target/adaguc-services-*.war /usr/share/tomcat/webapps/adaguc-services.war
+# <== SKIP ==
 
 # Install adaguc-server
 WORKDIR /adaguc
-#RUN curl -L  https://github.com/KNMI/adaguc-server/archive/master.tar.gz > adaguc-server.tar.gz
-ADD  https://github.com/KNMI/adaguc-server/archive/master.tar.gz /adaguc/adaguc-server.tar.gz
+#RUN curl -L  https://github.com/TheKarppinen/adaguc-server/archive/master.tar.gz > adaguc-server.tar.gz
+ADD  https://github.com/TheKarppinen/adaguc-server/archive/master.tar.gz /adaguc/adaguc-server.tar.gz
 RUN tar xvf adaguc-server.tar.gz
 WORKDIR /adaguc/adaguc-server-master
 RUN bash compile.sh

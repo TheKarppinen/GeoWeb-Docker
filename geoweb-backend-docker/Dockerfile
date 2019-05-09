@@ -2,7 +2,7 @@ FROM maven:3-jdk-8-alpine
 VOLUME /tmp
 RUN mkdir /src
 WORKDIR /src
-ADD https://github.com/KNMI/GeoWeb-BackEnd/archive/master.tar.gz geoweb-backend.tar.gz
+ADD https://github.com/TheKarppinen/GeoWeb-BackEnd/archive/master.tar.gz geoweb-backend.tar.gz
 RUN tar xvf geoweb-backend.tar.gz
 RUN mv GeoWeb-BackEnd-master geoweb-backend
 WORKDIR /src/geoweb-backend/

@@ -1,7 +1,7 @@
 FROM php:7.0-apache
 
 WORKDIR /var/www/html
-ADD https://github.com/KNMI/adaguc-viewer/archive/master.tar.gz adaguc-viewer.tar.gz
+ADD https://github.com/TheKarppinen/adaguc-viewer/archive/master.tar.gz adaguc-viewer.tar.gz
 RUN tar xvf adaguc-viewer.tar.gz
 RUN mv adaguc-viewer-master adaguc-viewer && rm adaguc-viewer.tar.gz
 
