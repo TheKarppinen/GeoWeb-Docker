@@ -5,20 +5,20 @@ services:
         image: geoweb-backend
         container_name: geoweb-backend
         ports:
-            - "8090:8080"
+            - "8091:8080"
     geoweb-frontend-nginx :
         image: geoweb-frontend-nginx
         container_name: geoweb-frontend-nginx
         ports:
-            - "8093:80"
+            - "8090:80"
         environment:
-            - "GEOWEBBACKENDURL=http://spiritus:8090/backend"
-            - "WEBSERVER_URL=http://spiritus:8093"
+            - "GEOWEBBACKENDURL=http://spiritus:8091/backend"
+            - "WEBSERVER_URL=http://spiritus:8090"
     adaguc-server:
         image: adaguc-server
         container_name: adaguc-server
         ports:
-            - "8092:8080"
+            - "8093:8080"
         volumes:
             - $HOME/data/adaguc-datasets:/data/adaguc-datasets
             - $HOME/data/adaguc-autowms:/data/adaguc-autowms
@@ -28,6 +28,6 @@ services:
         image: adaguc-viewer
         container_name: adaguc-viewer
         ports:
-            - "8091:80"
+            - "8092:80"
 
-# Visit http://localhost:8083/#/ for GeoWeb-FrontEnd
+# Visit http://localhost:8090 for GeoWeb-FrontEnd
