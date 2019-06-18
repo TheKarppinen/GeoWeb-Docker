@@ -1,9 +1,13 @@
-version: '2'
+version: '3.2'
 
 services:
     geoweb-backend:
-        image: geoweb-backend
-        container_name: geoweb-backend
+        deploy:
+            mode: replicated
+            replicas: 1
+            restart_policy:
+                condition: any
+        image: geoweb-backend:latest
         ports:
             - "8091:8080"
         volumes:
@@ -11,17 +15,39 @@ services:
             - /var/opt/geoweb/geoweb-backend/tmp/sigmets:/tmp/sigmets
             - /var/opt/geoweb/geoweb-backend/tmp/presets:/tmp/presets
             - /var/opt/geoweb/geoweb-backend/tmp/airmets:/tmp/airmets
-    geoweb-frontend-nginx :
-        image: geoweb-frontend-nginx
-        container_name: geoweb-frontend-nginx
+#        healthcheck:
+#            interval: 1m
+#            retries: 3
+#            test:
+#                - CMD
+#                - /opt/healthcheck.sh
+#                - timeout: 10s
+    geoweb-frontend-nginx:
+        deploy:
+            mode: replicated
+            replicas: 1
+            restart_policy:
+                condition: any
+        image: geoweb-frontend-nginx:latest
         ports:
             - "8090:80"
         environment:
             - "GEOWEBBACKENDURL=http://spiritus:8091/backend"
             - "WEBSERVER_URL=http://spiritus:8090"
+#        healthcheck:
+#            interval: 1m
+#            retries: 3
+#            test:
+#                - CMD
+#                - /opt/healthcheck.sh
+#                - timeout: 10s
     adaguc-server:
-        image: adaguc-server
-        container_name: adaguc-server
+        deploy:
+            mode: replicated
+            replicas: 1
+            restart_policy:
+                condition: any
+        image: adaguc-server:latest
         ports:
             - "8093:8080"
         volumes:
@@ -33,10 +59,29 @@ services:
             - /var/opt/geoweb/adaguc-server/security:/adaguc/security
         environment:
             - "EXTERNALADDRESS=http://spiritus:8093"
+#        healthcheck:
+#            interval: 1m
+#            retries: 3
+#            test:
+#                - CMD
+#                - /opt/healthcheck.sh
+#                - timeout: 10s
     adaguc-viewer:
-        image: adaguc-viewer
-        container_name: adaguc-viewer
+        deploy:
+            mode: replicated
+            replicas: 1
+            restart_policy:
+                condition: any
+        image: adaguc-viewer:latest
         ports:
             - "8092:80"
+#        healthcheck:
+#            interval: 1m
+#            retries: 3
+#            test:
+#                - CMD
+#                - /opt/healthcheck.sh
+#                - timeout: 10s
 
 # Visit http://localhost:8090 for GeoWeb-FrontEnd
+# Visit http://localhost:8092 for adaguc-viewer
