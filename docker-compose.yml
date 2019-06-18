@@ -6,6 +6,11 @@ services:
         container_name: geoweb-backend
         ports:
             - "8091:8080"
+        volumes:
+            - /var/opt/geoweb/geoweb-backend/tmp/tafs:/tmp/tafs
+            - /var/opt/geoweb/geoweb-backend/tmp/sigmets:/tmp/sigmets
+            - /var/opt/geoweb/geoweb-backend/tmp/presets:/tmp/presets
+            - /var/opt/geoweb/geoweb-backend/tmp/airmets:/tmp/airmets
     geoweb-frontend-nginx :
         image: geoweb-frontend-nginx
         container_name: geoweb-frontend-nginx
@@ -20,8 +25,12 @@ services:
         ports:
             - "8093:8080"
         volumes:
-            - $HOME/data/adaguc-datasets:/data/adaguc-datasets
-            - $HOME/data/adaguc-autowms:/data/adaguc-autowms
+            - /var/opt/geoweb/adaguc-server/data/adaguc-datasets:/data/adaguc-datasets
+            - /var/opt/geoweb/adaguc-server/data/adaguc-autowms:/data/adaguc-autowms
+            - /var/opt/geoweb/adaguc-server/data/adaguc-data:/data/adaguc-data
+            - /var/opt/geoweb/adaguc-server/log:/var/log/adaguc
+            - /var/opt/geoweb/adaguc-server/adagucdb:/adaguc/adagucdb
+            - /var/opt/geoweb/adaguc-server/security:/adaguc/security
         environment:
             - "EXTERNALADDRESS=http://spiritus:8093"
     adaguc-viewer:
