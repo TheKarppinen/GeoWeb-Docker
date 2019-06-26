@@ -12,3 +12,8 @@ RUN echo "{\"version\": \"sprint_0.XX.Y\",\"commit_id\":\"`git ls-remote https:/
 
 RUN npm run deploy:prod-quick
 
+# Curl needed for healthcheck
+RUN yum update -y && \
+    yum install -y curl \
+    yum clean all && \
+    rm -rf /var/cache/yum
