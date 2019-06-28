@@ -59,8 +59,6 @@ services:
             - "EXTERNALADDRESS=http://spiritus:8093"
             - 'ADAGUC_DB=host=adaguc-db port=5432 user=adaguc password=adaguc dbname=adaguc'
             - "ADAGUC_SERVICES_CONFIG=/adaguc/adaguc-services-config.xml"
-        links: 
-            - adaguc-db
         depends_on: 
             - adaguc-db
         logging:
@@ -100,8 +98,12 @@ services:
             timeout: 10s
             retries: 3
     adaguc-db:
+        deploy:
+            mode: replicated
+            replicas: 1
+            restart_policy:
+                condition: any
         image: postgres
-        container_name: adaguc-db
         hostname: adaguc-db
         # Ensures containers running in the adaguc-network docker network can connect to the database, provided they use the
         # right credentials
@@ -109,13 +111,13 @@ services:
             - adaguc-network
         volumes:
             - adaguc-server-compose-adagucdb:/adaguc/adagucdb
-        expose:
-            - "5432"
+# Exposing ports is unnecessary - services on the same network can access each other's containers on any port
+#        expose:
+#            - "5432"
         environment:
             - "POSTGRES_USER=adaguc"
             - "POSTGRES_PASSWORD=adaguc"
             - "POSTGRES_DB=adaguc"
-        restart: unless-stopped
         logging:
               driver: "json-file"
               options:
