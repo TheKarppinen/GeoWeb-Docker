@@ -1,99 +1,118 @@
-FROM centos:7
+FROM centos/devtoolset-7-toolchain-centos7:7
+USER root
 
-RUN yum update -y && yum install -y \
-    epel-release
+MAINTAINER Adaguc Team at KNMI <adaguc@knmi.nl>
 
-RUN yum clean all && yum groupinstall -y "Development tools"
+######### First stage (build) ############
 
-RUN yum update -y && yum install -y \
-    hdf5-devel \
-    netcdf \
-    netcdf-devel \
+# production packages, same as stage two
+RUN yum update -y && \
+    yum install -y epel-release deltarpm && \
+    yum install -y cairo \
+    curl \
+    gd \
+    gdal \
+    hdf5 \
+    libxml2 \
     proj \
-    proj-devel \
-    sqlite \
-    sqlite-devel \
     udunits2 \
-    udunits2-devel \
-    make \
-    libxml2-devel \
-    cairo-devel \
+    openssl \
+    netcdf \
+    java-1.8.0-openjdk && \
+# building / development packages
+    yum install -y centos-release-scl && \
+    yum install -y devtoolset-7-gcc-c++ && \
+    source /opt/rh/devtoolset-7/enable && \
+    yum install -y cairo-devel \
     gd-devel \
-    postgresql-devel \
-    postgresql-server \
     gdal-devel \
-    tomcat \ 
-    maven \
-    logrotate \
-    cronie
+    hdf5-devel \
+    libxml2-devel \
+    make \
+    netcdf-devel \
+    openssl \
+    postgresql-devel \
+    proj-devel \
+    sqlite-devel \
+    udunits2-devel && \
+    yum clean all && \
+    rm -rf /var/cache/yum
 
-RUN mkdir /adaguc
+# Install adaguc-server from context
+#COPY . /adaguc/adaguc-server-master
 
+# Alternatively install adaguc from github
 WORKDIR /adaguc
+ADD https://github.com/KNMI/adaguc-server/archive/master.tar.gz /adaguc/adaguc-server-master.tar.gz
+RUN tar -xzvf adaguc-server-master.tar.gz
 
-# Configure postgres
-RUN mkdir /postgresql
-RUN touch /var/log/postgresql.log
-RUN chown postgres: /postgresql/
-RUN chown postgres: /var/log/postgresql.log
-RUN runuser -l postgres -c "initdb -D /postgresql"
-
-# Install adaguc-services
-WORKDIR /adaguc
-ADD  https://github.com/KNMI/adaguc-services/archive/master.tar.gz  /adaguc/adaguc-services.tar.gz
-RUN tar xvf adaguc-services.tar.gz
-WORKDIR /adaguc/adaguc-services-master
-RUN mvn package
-RUN cp ./target/adaguc-services-*.war /usr/share/tomcat/webapps/adaguc-services.war
-
-# Install adaguc-server
-WORKDIR /adaguc
-#RUN curl -L  https://github.com/KNMI/adaguc-server/archive/master.tar.gz > adaguc-server.tar.gz
-ADD  https://github.com/KNMI/adaguc-server/archive/master.tar.gz /adaguc/adaguc-server.tar.gz
-RUN tar xvf adaguc-server.tar.gz
 WORKDIR /adaguc/adaguc-server-master
 RUN bash compile.sh
 
-COPY adaguc-server-config.xml /adaguc/adaguc-server-config.xml
+######### Second stage (production) ############
+FROM centos:7
 
-COPY adaguc-services-config.xml /adaguc/adaguc-services-config.xml
+# production packages, same as stage one
+RUN yum update -y && \
+    yum install -y epel-release && \
+    yum install -y deltarpm \
+    cairo \
+    curl \
+    gd \
+    gdal \
+    hdf5 \
+    libxml2 \
+    proj \
+    postgresql \
+    udunits2 \
+    openssl \
+    netcdf \
+    java-1.8.0-openjdk && \
+    yum clean all && \
+    rm -rf /var/cache/yum
 
-ENV ADAGUC_SERVICES_CONFIG=/adaguc/adaguc-services-config.xml 
+WORKDIR /adaguc/adaguc-server-master
 
-# Set up data dir, this is also configured in adaguc-server-config.xml
-# /data/adaguc-autowms : Place your netcdfs/HDF5's/GeoJSONS here, they will be visualized with the source=<file> KVP via the URI
-# /data/adaguc-datasets : Place your dataset XML configuration here, they will be accessible with the dataset=<dataset basename> KVP via the URI
-# /data/adaguc-data : Place your netcdfs/HDF5's/GeoJSONS here you don't want to have accessible via dataset configurations.
-RUN mkdir -p /data/adaguc-autowms && mkdir -p /data/adaguc-datasets && mkdir -p /data/adaguc-data
+# Install compiled adaguc binaries from stage one    
+COPY --from=0 /adaguc/adaguc-server-master/bin /adaguc/adaguc-server-master/bin
+COPY --from=0 /adaguc/adaguc-server-master/data /adaguc/adaguc-server-master/data
+COPY --from=0 /adaguc/adaguc-server-master/tests /adaguc/adaguc-server-master/tests
+COPY --from=0 /adaguc/adaguc-server-master/runtests.sh /adaguc/adaguc-server-master/runtests.sh
 
+# Install adaguc-services (spring boot application for running adaguc-server)
+RUN curl -L https://jitpack.io/com/github/KNMI/adaguc-services/1.2.1/adaguc-services-1.2.1.jar -o /adaguc/adaguc-services.jar && \
+# Install newer numpy
+    curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && \
+    python get-pip.py && \
+    pip install numpy netcdf4 six lxml && \
+# Run adaguc-server functional and regression tests
+    bash runtests.sh && \
+# Set same uid as vivid
+    useradd -m adaguc -u 1000 && \
+# Setup directories
+    mkdir -p /data/adaguc-autowms && \
+    mkdir -p /data/adaguc-datasets && \
+    mkdir -p /data/adaguc-data && \
+    mkdir -p /adaguc/userworkspace && \
+    mkdir -p /data/adaguc-services-home && \
+    mkdir -p /adaguc/basedir && \
+    mkdir -p /adaguc/security && \
+    mkdir -p /data/adaguc-datasets-internal && \
+    mkdir -p /servicehealth
+ 
+# Configure
+COPY ./Docker/adaguc-server-config.xml /adaguc/adaguc-server-config.xml
+COPY ./Docker/adaguc-services-config.xml /adaguc/adaguc-services-config.xml
+COPY ./Docker/start.sh /adaguc/
+COPY ./Docker/adaguc-server-*.sh /adaguc/
+COPY ./Docker/baselayers.xml /data/adaguc-datasets-internal/baselayers.xml
+RUN  chmod +x /adaguc/adaguc-server-*.sh && \
+     chmod +x /adaguc/start.sh && \
+     chown -R adaguc:adaguc /data/adaguc* /adaguc /servicehealth
+
+USER adaguc
+
+# For HTTP
 EXPOSE 8080
 
-COPY start.sh /adaguc/
-
-RUN chmod +x /adaguc/start.sh
-
-RUN mkdir -p /adaguc/userworkspace/
-RUN mkdir -p /adaguc/basedir/
-RUN mkdir -p /var/log/adaguc/ 
-COPY adaguc-server-logrotate /etc/logrotate.d/adaguc
-
-COPY adaguc-server-updatedatasets.sh /adaguc/
-RUN chmod +x /adaguc/adaguc-server-updatedatasets.sh
-
-ENTRYPOINT /adaguc/start.sh
- 
-# docker build -t adaguc-server . 
-# touch $HOME/adagucdockerlog.log && chmod 777 $HOME/adagucdockerlog.log
-# mkdir -p ~/data/adaguc-autowms && mkdir -p ~/data/adaguc-datasets && chmod 777 ~/data/ * -R 
-# mkdir -p $HOME/adaguclogs && chmod 777 $HOME/adaguclogs
-# docker run -e EXTERNALADDRESS="http://127.0.0.1:8080/" -p 8080:8080 -v $HOME/data:/data -v $HOME/adaguclogs:/var/log/adaguc -it adaguc-server 
-# Check http://localhost:8080/adaguc-services/adagucserver?service=wms&request=getcapabilities
-# You can copy NetCDF's / GeoJSONS to your hosts ~/data/adaguc-autowms directory. This will be served through adaguc-server, via the source=<filename> key value pair. testdata.nc is copied there by default. 
-# Directories $HOME/data/adaguc-datasets and $HOME/data/adaguc-autowms will be created if they do not exist.
-# Copy your NetCDF/GeoJSON/HDF5 to $HOME/data/adaguc-autowms
-# Files are are accessible via http://localhost:8080/adaguc-services/adagucserver?source=testdata.nc&&service=WMS&request=GetCapabilities
-# Testdata can be found here: http://opendap.knmi.nl/knmi/thredds/catalog/ADAGUC/catalog.html
-# Copy your XML configurations to $HOME/data/adaguc-datasets
-# Datasets are accessible via http://localhost:8080/adaguc-services/wms?service=wms&request=getcapabilities&dataset=dataset_a
-# You can also look inside the container with docker exec -i -t  `docker ps -f ancestor=adaguc-server -q` bash
-
+ENTRYPOINT ["sh", "/adaguc/start.sh"]
