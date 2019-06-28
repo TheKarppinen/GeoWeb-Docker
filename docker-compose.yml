@@ -34,13 +34,13 @@ services:
         environment:
             - "GEOWEBBACKENDURL=http://spiritus:8091/backend"
             - "WEBSERVER_URL=http://spiritus:8090"
-#        healthcheck:
-#            interval: 1m
-#            retries: 3
-#            test:
-#                - CMD
-#                - /opt/healthcheck.sh
-#                - timeout: 10s
+        healthcheck:
+            interval: 1m
+            retries: 3
+            test:
+                - CMD
+                - /opt/healthcheck.sh
+                - timeout: 10s
     adaguc-server:
         deploy:
             mode: replicated
