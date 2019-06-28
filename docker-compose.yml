@@ -15,13 +15,11 @@ services:
             - /var/opt/geoweb/geoweb-backend/tmp/sigmets:/tmp/sigmets
             - /var/opt/geoweb/geoweb-backend/tmp/presets:/tmp/presets
             - /var/opt/geoweb/geoweb-backend/tmp/airmets:/tmp/airmets
-#        healthcheck:
-#            interval: 1m
-#            retries: 3
-#            test:
-#                - CMD
-#                - /opt/healthcheck.sh
-#                - timeout: 10s
+        healthcheck:
+            test: ["CMD", "/opt/healthcheck.sh"]
+            interval: 1m
+            timeout: 10s
+            retries: 3
     geoweb-frontend-nginx:
         deploy:
             mode: replicated
@@ -57,13 +55,11 @@ services:
             - /var/opt/geoweb/adaguc-server/security:/adaguc/security
         environment:
             - "EXTERNALADDRESS=http://spiritus:8093"
-#        healthcheck:
-#            interval: 1m
-#            retries: 3
-#            test:
-#                - CMD
-#                - /opt/healthcheck.sh
-#                - timeout: 10s
+        healthcheck:
+            test: ["CMD", "/opt/healthcheck.sh"]
+            interval: 1m
+            timeout: 10s
+            retries: 3
     adaguc-viewer:
         deploy:
             mode: replicated
@@ -73,13 +69,14 @@ services:
         image: adaguc-viewer:latest
         ports:
             - "8092:80"
-#        healthcheck:
-#            interval: 1m
-#            retries: 3
-#            test:
-#                - CMD
-#                - /opt/healthcheck.sh
-#                - timeout: 10s
+	environment:
+            - "ADAGUCSERVICES_AUTOWMS=http://spiritus:8090/adaguc-services/autowms?"
+        healthcheck:
+            test: ["CMD", "/opt/healthcheck.sh"]
+            interval: 1m
+            timeout: 10s
+            retries: 3
+
 
 # Visit http://localhost:8090 for GeoWeb-FrontEnd
 # Visit http://localhost:8092 for adaguc-viewer
