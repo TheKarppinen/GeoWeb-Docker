@@ -69,7 +69,7 @@ services:
         image: adaguc-viewer:latest
         ports:
             - "8092:80"
-	environment:
+        environment:
             - "ADAGUCSERVICES_AUTOWMS=http://spiritus:8090/adaguc-services/autowms?"
         healthcheck:
             test: ["CMD", "/opt/healthcheck.sh"]
