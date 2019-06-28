@@ -11,6 +11,3 @@ RUN npm run clean
 RUN echo "{\"version\": \"sprint_0.XX.Y\",\"commit_id\":\"`git ls-remote https://github.com/TheKarppinen/GeoWeb-FrontEnd.git rev-parse HEAD | awk '{print $1}'`\" }" >  /frontend/geoweb-frontend/config/config.json
 
 RUN npm run deploy:prod-quick
-
-# Curl needed for healthcheck
-RUN apt-get update && apt-get install -y curl && apt-get clean
