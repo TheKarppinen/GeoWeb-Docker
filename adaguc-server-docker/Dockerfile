@@ -73,7 +73,7 @@ RUN yum update -y && \
 
 WORKDIR /adaguc/adaguc-server-master
 
-# Install compiled adaguc binaries from stage one    
+# Install compiled adaguc binaries from stage one
 COPY --from=0 /adaguc/adaguc-server-master/bin /adaguc/adaguc-server-master/bin
 COPY --from=0 /adaguc/adaguc-server-master/data /adaguc/adaguc-server-master/data
 COPY --from=0 /adaguc/adaguc-server-master/tests /adaguc/adaguc-server-master/tests
@@ -101,11 +101,12 @@ RUN curl -L https://jitpack.io/com/github/KNMI/adaguc-services/1.2.1/adaguc-serv
     mkdir -p /servicehealth
  
 # Configure
-COPY ./Docker/adaguc-server-config.xml /adaguc/adaguc-server-config.xml
-COPY ./Docker/adaguc-services-config.xml /adaguc/adaguc-services-config.xml
-COPY ./Docker/start.sh /adaguc/
-COPY ./Docker/adaguc-server-*.sh /adaguc/
-COPY ./Docker/baselayers.xml /data/adaguc-datasets-internal/baselayers.xml
+# Install compiled adaguc binaries from stage one
+COPY --from=0 /adaguc/adaguc-server-master/Docker/adaguc-server-config.xml /adaguc/adaguc-server-config.xml
+COPY --from=0 /adaguc/adaguc-server-master/Docker/adaguc-services-config.xml /adaguc/adaguc-services-config.xml
+COPY --from=0 /adaguc/adaguc-server-master/Docker/start.sh /adaguc/
+COPY --from=0 /adaguc/adaguc-server-master/Docker/adaguc-server-*.sh /adaguc/
+COPY --from=0 /adaguc/adaguc-server-master/Docker/baselayers.xml /data/adaguc-datasets-internal/baselayers.xml
 RUN  chmod +x /adaguc/adaguc-server-*.sh && \
      chmod +x /adaguc/start.sh && \
      chown -R adaguc:adaguc /data/adaguc* /adaguc /servicehealth
