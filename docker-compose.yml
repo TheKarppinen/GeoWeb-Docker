@@ -32,6 +32,8 @@ services:
         environment:
             - "GEOWEBBACKENDURL=http://spiritus:8091/backend"
             - "WEBSERVER_URL=http://spiritus:8090"
+        depends_on:
+            - geoweb-backend
         healthcheck:
             test: ["CMD", "/opt/healthcheck.sh"]
             interval: 1m
@@ -81,16 +83,13 @@ services:
         image: adaguc-viewer:latest
         ports:
             - "8092:80"
-        networks:
-            - adaguc-network
-        hostname: adaguc-viewer
         depends_on:
             - adaguc-server
         environment:
-            - "EXTERNALADDRESS=http://spiritus:8093"
-            - "LOCAL_ADAGUCSERVER_ADDR=http://spiritus:8090" # Should be same as adaguc-server's EXTERNALADDRESS
-            - "REMOTE_ADAGUCSERVER_ADDR=http://spiritus:8090" # Do not change this within the docker-compose environment
-            - "ADAGUCSERVICES_AUTOWMS=http://spiritus:8090/adaguc-services/autowms?"
+            - "EXTERNALADDRESS=http://spiritus:8092"
+            - "LOCAL_ADAGUCSERVER_ADDR=http://spiritus:8093" # Should be same as adaguc-server's EXTERNALADDRESS
+            - "REMOTE_ADAGUCSERVER_ADDR=http://spiritus:8093" # Do not change this within the docker-compose environment
+            - "ADAGUCSERVICES_AUTOWMS=http://spiritus:8093/adaguc-services/autowms?"
         logging:
               driver: "json-file"
               options:
@@ -115,9 +114,9 @@ services:
             - adaguc-network
         volumes:
             - adaguc-server-compose-adagucdb:/adaguc/adagucdb
-# Exposing ports is unnecessary - services on the same network can access each other's containers on any port
-#        expose:
-#            - "5432"
+         # Exposing ports is unnecessary - services on the same network can access each other's containers on any port
+         #expose:
+         #    - "5432"
         environment:
             - "POSTGRES_USER=adaguc"
             - "POSTGRES_PASSWORD=adaguc"
