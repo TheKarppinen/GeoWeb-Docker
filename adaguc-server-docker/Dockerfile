@@ -111,9 +111,10 @@ RUN  chmod +x /adaguc/adaguc-server-*.sh && \
      chmod +x /adaguc/start.sh && \
      chown -R adaguc:adaguc /data/adaguc* /adaguc /servicehealth
 
-USER adaguc
-
 COPY healthcheck.sh /opt/healthcheck.sh
+RUN chmod 555 /opt/healthcheck.sh
+
+USER adaguc
 
 # For HTTP
 EXPOSE 8080
