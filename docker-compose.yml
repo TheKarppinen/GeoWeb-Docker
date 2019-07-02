@@ -127,7 +127,7 @@ services:
                 max-size: "200k"
                 max-file: "10"
         healthcheck:
-            test: ["CMD", "pg_isready"]
+            test: ["CMD", "pg_isready -U postgres"]
             interval: 1m
             timeout: 10s
             retries: 3
