@@ -126,6 +126,11 @@ services:
               options:
                 max-size: "200k"
                 max-file: "10"
+        healthcheck:
+            test: ["CMD", "pg_isready"]
+            interval: 1m
+            timeout: 10s
+            retries: 3
 volumes:
     adaguc-server-compose-adagucdb:
 networks:
