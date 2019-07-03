@@ -56,7 +56,12 @@ services:
                 max-size: "200k"
                 max-file: "10"
         healthcheck:
-            test: ["CMD", "pg_isready -U postgres"]
+            # Disabled for now because for some reason
+            # using this healthcheck makes swarm loose
+            # adaguc-db hostname information that
+            # adaguc-server needs for postgres connection.
+            disable: true
+            #test: ["CMD", "pg_isready -U postgres"]
             interval: 1m
             timeout: 10s
             retries: 3
