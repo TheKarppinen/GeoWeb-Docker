@@ -9,7 +9,21 @@
 # it may otherwise give 0/1 replicas.
 #   docker-compose up
 
-echo "List services"
+echo "List stack"
+docker stack ls
+
+VAR=$(docker stack ls | grep geoweb | awk '{print $1}')
+if [[ ! -z "$VAR" ]]
+then
+  echo -e "\nRemove existing geoweb stack content"
+  docker stack rm $(echo "$VAR" | xargs)
+fi
+
+# Wait for removals to finish before continuing to make sure
+sleep 8
+
+
+echo -e "\n\nList services"
 docker service ls
 
 VAR=$(docker service ls | grep geoweb | awk '{print $1}')
