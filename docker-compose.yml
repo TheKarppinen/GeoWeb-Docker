@@ -27,15 +27,36 @@ services:
             restart_policy:
                 condition: any
         image: geoweb-frontend-nginx:latest
+        depends_on:
+            - "geoweb-backend"
         ports:
             - "8090:80"
         environment:
             - "GEOWEBBACKENDURL=http://spiritus:8091/backend"
             - "WEBSERVER_URL=http://spiritus:8090"
-        depends_on:
-            - geoweb-backend
         healthcheck:
             test: ["CMD", "/opt/healthcheck.sh"]
+            interval: 1m
+            timeout: 10s
+            retries: 3
+    adaguc-db:
+        deploy:
+            mode: replicated
+            replicas: 1
+            restart_policy:
+                condition: any
+        image: postgres:latest
+        environment:
+            - "POSTGRES_USER=adaguc"
+            - "POSTGRES_PASSWORD=adaguc"
+            - "POSTGRES_DB=adaguc"
+        logging:
+              driver: "json-file"
+              options:
+                max-size: "200k"
+                max-file: "10"
+        healthcheck:
+            test: ["CMD", "pg_isready -U postgres"]
             interval: 1m
             timeout: 10s
             retries: 3
@@ -46,8 +67,8 @@ services:
             restart_policy:
                 condition: any
         image: adaguc-server:latest
-        ports:
-            - "8093:8080"
+        depends_on:
+            - "adaguc-db"
         volumes:
             - /var/opt/geoweb/adaguc-server/data/adaguc-datasets:/data/adaguc-datasets
             - /var/opt/geoweb/adaguc-server/data/adaguc-autowms:/data/adaguc-autowms
@@ -55,15 +76,12 @@ services:
             - /var/opt/geoweb/adaguc-server/log:/var/log/adaguc
             - /var/opt/geoweb/adaguc-server/adagucdb:/adaguc/adagucdb
             - /var/opt/geoweb/adaguc-server/security:/adaguc/security
-        networks:
-            - adaguc-network
-        hostname: adaguc-server
+        ports:
+            - "8093:8080"
         environment:
             - "EXTERNALADDRESS=http://spiritus:8093"
-            - 'ADAGUC_DB=host=adaguc-db port=5432 user=adaguc password=adaguc dbname=adaguc'
+            - "ADAGUC_DB=host=adaguc-db port=5432 user=adaguc password=adaguc dbname=adaguc"
             - "ADAGUC_SERVICES_CONFIG=/adaguc/adaguc-services-config.xml"
-        depends_on:
-            - adaguc-db
         logging:
               driver: "json-file"
               options:
@@ -81,10 +99,10 @@ services:
             restart_policy:
                 condition: any
         image: adaguc-viewer:latest
+        depends_on:
+            - "adaguc-server"
         ports:
             - "8092:80"
-        depends_on:
-            - adaguc-server
         environment:
             - "EXTERNALADDRESS=http://spiritus:8092"
             - "LOCAL_ADAGUCSERVER_ADDR=http://spiritus:8093" # Should be same as adaguc-server's EXTERNALADDRESS
@@ -100,41 +118,6 @@ services:
             interval: 1m
             timeout: 10s
             retries: 3
-    adaguc-db:
-        deploy:
-            mode: replicated
-            replicas: 1
-            restart_policy:
-                condition: any
-        image: postgres
-        hostname: adaguc-db
-        # Ensures containers running in the adaguc-network docker network can connect to the database, provided they use the
-        # right credentials
-        networks:
-            - adaguc-network
-        volumes:
-            - adaguc-server-compose-adagucdb:/adaguc/adagucdb
-         # Exposing ports is unnecessary - services on the same network can access each other's containers on any port
-         #expose:
-         #    - "5432"
-        environment:
-            - "POSTGRES_USER=adaguc"
-            - "POSTGRES_PASSWORD=adaguc"
-            - "POSTGRES_DB=adaguc"
-        logging:
-              driver: "json-file"
-              options:
-                max-size: "200k"
-                max-file: "10"
-        healthcheck:
-            test: ["CMD", "pg_isready -U postgres"]
-            interval: 1m
-            timeout: 10s
-            retries: 3
-volumes:
-    adaguc-server-compose-adagucdb:
-networks:
-    adaguc-network:
 
 
 # Visit http://localhost:8090 for GeoWeb-FrontEnd
